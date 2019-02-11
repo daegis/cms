@@ -10,6 +10,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -70,8 +71,9 @@ public class ImgController {
 
     @GetMapping(value = "/p/{name}", produces = MediaType.IMAGE_JPEG_VALUE)
     @ResponseBody
-    public byte[] getImg(@PathVariable String name) throws IOException {
+    public byte[] getImg(@PathVariable String name, HttpServletResponse response) throws IOException {
         FileInputStream fis = new FileInputStream(new File(filePath + name));
+        response.setHeader("Cache-Control", "max-age=2222222");
         return IOUtils.toByteArray(fis);
     }
 
