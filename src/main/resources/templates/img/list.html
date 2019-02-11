@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="cn" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>图片列表</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <script src="/layui/layui.all.js"></script>
+</head>
+<body>
+<button type="button" class="layui-btn" id="upload_btn">
+    <i class="layui-icon">&#xe67c;</i>上传图片
+</button>
+<hr>
+<table border="1">
+    <tr>
+        <td width="200px">图片名</td>
+        <td width="300px">图片预览</td>
+        <td width="200px">操作</td>
+    </tr>
+    <tr th:each="img:${imgs}">
+        <td th:text="${img.name}"></td>
+        <td>
+            <img th:src="${img.url}" width="250px" height="250px"/>
+        </td>
+        <td>
+            <a th:onclick="@{'doDelete(\''+${img.name}+'\')'}">删除</a>
+        </td>
+    </tr>
+</table>
+<script>
+
+    let $;
+    layui.use(['upload', 'jquery'], function () {
+        let upload = layui.upload;
+        $ = layui.jquery;
+
+        //执行实例
+        let uploadInst = upload.render({
+            elem: '#upload_btn' //绑定元素
+            , url: '/img/upload' //上传接口
+            , done: function (res) {
+                if (res.success) {
+                    alert('上传成功！文件名：' + res.fileName);
+                    window.location.reload();
+                } else {
+                    alert(res.msg);
+                }
+            }
+            , error: function () {
+                alert('服务器连接失败');
+            }
+        });
+    });
+
+    function doDelete(name) {
+        $.ajax({
+            url: '/img/p/' + name,
+            type: 'delete',
+            dataType: 'json',
+            error: function () {
+                alert('服务器连接失败');
+            },
+            success: function (data) {
+                if (data.success) {
+                    alert('删除成功');
+                    window.location.reload();
+                } else {
+                    alert(data.msg);
+                }
+            }
+        })
+    }
+</script>
+</body>
+</html>
