@@ -1,19 +1,18 @@
 package cn.aegisa.bai.cms.web;
 
+import cn.aegisa.bai.cms.config.properties.AliOSSProperties;
+import cn.aegisa.bai.cms.config.properties.CommonProperties;
 import cn.aegisa.bai.cms.vo.ImageVo;
+import com.aliyun.oss.OSSClient;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
-import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -28,6 +27,15 @@ public class ImgController {
 
     private String filePath = "/data/imgs/";
 
+    @Autowired
+    private OSSClient ossClient;
+
+    @Autowired
+    private CommonProperties commonProperties;
+
+    @Autowired
+    private AliOSSProperties ossProperties;
+
     @RequestMapping("/list")
     public String list(Model model) {
         File imgDir = new File(filePath);
@@ -38,7 +46,7 @@ public class ImgController {
                 ImageVo vo = new ImageVo();
                 String name = img.getName();
                 vo.setName(name);
-                vo.setUrl("/img/p/" + name);
+                vo.setUrl(commonProperties.getImgUrl() + name);
                 imageVoList.add(vo);
             }
         }
@@ -57,25 +65,19 @@ public class ImgController {
         }
         String originalFilename = file.getOriginalFilename();
         String extendName = getExtendName(originalFilename);
-        String fileName = UUID.randomUUID().toString().replaceAll("-", "");
-        File dest = new File(filePath + fileName + extendName);
+        String fileName = UUID.randomUUID().toString().replaceAll("-", "") + extendName;
+        File dest = new File(filePath + fileName);
         try {
             file.transferTo(dest);
+            ossClient.putObject(ossProperties.getBucketName(), fileName, new File(filePath + fileName));
             result.put("fileName", fileName);
-        } catch (IOException e) {
+        } catch (Exception e) {
             result.put("success", false);
             result.put("msg", e.toString());
         }
         return result;
     }
 
-    @GetMapping(value = "/p/{name}", produces = MediaType.IMAGE_JPEG_VALUE)
-    @ResponseBody
-    public byte[] getImg(@PathVariable String name, HttpServletResponse response) throws IOException {
-        FileInputStream fis = new FileInputStream(new File(filePath + name));
-        response.setHeader("Cache-Control", "max-age=2222222");
-        return IOUtils.toByteArray(fis);
-    }
 
     @DeleteMapping("/p/{name}")
     @ResponseBody
@@ -85,6 +87,7 @@ public class ImgController {
         File file = new File(filePath + name);
         if (file.exists()) {
             boolean delete = file.delete();
+            ossClient.deleteObject(ossProperties.getBucketName(), name);
             if (!delete) {
                 result.put("success", false);
                 result.put("msg", "文件删除失败");
