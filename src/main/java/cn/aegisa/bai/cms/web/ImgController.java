@@ -2,7 +2,9 @@ package cn.aegisa.bai.cms.web;
 
 import cn.aegisa.bai.cms.config.properties.AliOSSProperties;
 import cn.aegisa.bai.cms.config.properties.CommonProperties;
+import cn.aegisa.bai.cms.service.ImgService;
 import cn.aegisa.bai.cms.vo.ImageVo;
+import cn.aegisa.bai.model.UploadImg;
 import com.aliyun.oss.OSSClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -36,19 +39,20 @@ public class ImgController {
     @Autowired
     private AliOSSProperties ossProperties;
 
+    @Autowired
+    private ImgService imgService;
+
     @RequestMapping("/list")
     public String list(Model model) {
-        File imgDir = new File(filePath);
-        File[] imgs = imgDir.listFiles();
+        List<UploadImg> imgList = imgService.getAllImgs();
         List<ImageVo> imageVoList = new ArrayList<>();
-        if (imgs != null) {
-            for (File img : imgs) {
-                ImageVo vo = new ImageVo();
-                String name = img.getName();
-                vo.setName(name);
-                vo.setUrl(commonProperties.getImgUrl() + name);
-                imageVoList.add(vo);
-            }
+        for (UploadImg img : imgList) {
+            ImageVo vo = new ImageVo();
+            vo.setId(img.getId());
+            vo.setName(img.getImgName());
+            vo.setUrl(img.getCdnUrl());
+            vo.setUploadTime(img.getUploadTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            imageVoList.add(vo);
         }
         model.addAttribute("imgs", imageVoList);
         return "img/list";
@@ -70,6 +74,8 @@ public class ImgController {
         try {
             file.transferTo(dest);
             ossClient.putObject(ossProperties.getBucketName(), fileName, new File(filePath + fileName));
+            // 文件上传成功，保存图片信息
+            imgService.saveUploadInfo(fileName);
             result.put("fileName", fileName);
         } catch (Exception e) {
             result.put("success", false);
@@ -79,22 +85,15 @@ public class ImgController {
     }
 
 
-    @DeleteMapping("/p/{name}")
+    @DeleteMapping("/p/{id}")
     @ResponseBody
-    public Map<String, Object> delete(@PathVariable String name) {
+    public Map<String, Object> delete(@PathVariable Integer id) {
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
-        File file = new File(filePath + name);
-        if (file.exists()) {
-            boolean delete = file.delete();
-            ossClient.deleteObject(ossProperties.getBucketName(), name);
-            if (!delete) {
-                result.put("success", false);
-                result.put("msg", "文件删除失败");
-            }
-        } else {
+        boolean deleteResult = imgService.deleteImg(id);
+        if (!deleteResult) {
             result.put("success", false);
-            result.put("msg", "文件不存在");
+            result.put("msg", "文件删除失败");
         }
         return result;
     }

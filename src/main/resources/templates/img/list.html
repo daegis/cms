@@ -16,6 +16,7 @@
     <tr>
         <td width="200px">图片名</td>
         <td width="300px">图片预览</td>
+        <td width="200px">上传时间</td>
         <td width="200px">操作</td>
     </tr>
     <tr th:each="img:${imgs}">
@@ -23,8 +24,9 @@
         <td>
             <img th:src="${img.url}" width="250px" height="250px"/>
         </td>
+        <td th:text="${img.uploadTime}"></td>
         <td>
-            <a th:onclick="@{'doDelete(\''+${img.name}+'\')'}">删除</a>
+            <a th:onclick="@{'doDelete(\''+${img.id}+'\')'}">删除</a>
         </td>
     </tr>
 </table>

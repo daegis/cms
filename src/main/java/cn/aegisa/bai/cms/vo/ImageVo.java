@@ -9,6 +9,8 @@ import lombok.Data;
  */
 @Data
 public class ImageVo {
+    private Integer id;
     private String name;
     private String url;
+    private String uploadTime;
 }
