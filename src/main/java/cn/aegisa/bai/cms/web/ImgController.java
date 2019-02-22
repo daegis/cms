@@ -14,7 +14,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -70,10 +69,8 @@ public class ImgController {
         String originalFilename = file.getOriginalFilename();
         String extendName = getExtendName(originalFilename);
         String fileName = UUID.randomUUID().toString().replaceAll("-", "") + extendName;
-        File dest = new File(filePath + fileName);
         try {
-            file.transferTo(dest);
-            ossClient.putObject(ossProperties.getBucketName(), fileName, new File(filePath + fileName));
+            ossClient.putObject(ossProperties.getBucketName(), fileName, file.getInputStream());
             // 文件上传成功，保存图片信息
             imgService.saveUploadInfo(fileName);
             result.put("fileName", fileName);
