@@ -5,7 +5,7 @@ import cn.aegisa.bai.model.UploadImg;
 import java.util.List;
 
 /**
- * @author xianyingda@hnair.com
+ * @author daegis@yeah.net
  * @serial
  * @since 2019-02-16 13:01
  */

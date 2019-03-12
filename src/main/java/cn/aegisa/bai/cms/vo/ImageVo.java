@@ -3,7 +3,7 @@ package cn.aegisa.bai.cms.vo;
 import lombok.Data;
 
 /**
- * @author xianyingda@hnair.com
+ * @author daegis@yeah.net
  * @serial
  * @since 2019-02-11 16:21
  */
